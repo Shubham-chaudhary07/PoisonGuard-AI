@@ -1,9 +1,4 @@
-import mysql.connector
+# TEMP DISABLED DB FOR DEPLOYMENT
 
 def connect_db():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Shubham07@",  # 🔴 change this
-        database="poison_app"
-    )
+    return None

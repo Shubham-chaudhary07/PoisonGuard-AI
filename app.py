@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from src.auth import login, signup
 from src.detector import detect_anomalies
-from src.dataset_db import save_dataset, get_user_datasets
 
 st.set_page_config(page_title="PoisonGuard AI", layout="wide")
 
@@ -36,7 +35,7 @@ def auth_page():
             if signup(new_user, new_pass):
                 st.success("Account created")
             else:
-                st.error("User already exists")
+                st.error("Error creating account")
 
 
 # ---------------- MAIN APP ----------------
@@ -75,15 +74,6 @@ def main_app():
         col3.metric("Safe", len(clean_data))
         col4.metric("Risk %", f"{risk:.2f}")
 
-        # SAVE DATASET
-        save_dataset(
-            st.session_state.username,
-            uploaded_file.name,
-            len(result),
-            len(suspicious),
-            risk
-        )
-
         # TABS
         tab1, tab2, tab3 = st.tabs(["🚨 Suspicious", "✅ Clean", "📊 Full"])
 
@@ -97,23 +87,14 @@ def main_app():
             st.dataframe(result)
 
         st.download_button(
-            "Download Clean Data",
+            "📥 Download Clean Data",
             clean_data.to_csv(index=False),
             "clean.csv"
         )
 
-    # HISTORY
+    # HISTORY DISABLED
     st.subheader("📁 Dataset History")
-
-    data = get_user_datasets(st.session_state.username)
-
-    if data:
-        history_df = pd.DataFrame(data, columns=[
-            "Filename", "Total Rows", "Threats", "Risk %", "Upload Time"
-        ])
-        st.dataframe(history_df)
-    else:
-        st.info("No datasets yet")
+    st.info("History feature disabled in cloud version")
 
     if st.button("Logout"):
         st.session_state.logged_in = False
