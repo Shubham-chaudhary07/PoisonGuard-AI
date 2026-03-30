@@ -50,32 +50,45 @@ def main_app():
     uploaded_file = st.file_uploader("📂 Upload Dataset", type=["csv"])
 
     if uploaded_file:
-        df = pd.read_csv(uploaded_file)
 
+        # 🔥 FIXED CSV LOADING (NO UNICODE ERROR)
+        try:
+            df = pd.read_csv(uploaded_file, encoding='utf-8')
+        except UnicodeDecodeError:
+            try:
+                df = pd.read_csv(uploaded_file, encoding='latin-1')
+            except:
+                try:
+                    df = pd.read_csv(uploaded_file, encoding='ISO-8859-1')
+                except Exception as e:
+                    st.error(f"❌ Error loading file: {e}")
+                    st.stop()
+
+        # 🧠 PROCESS DATA
         result = detect_anomalies(df)
 
         suspicious = result[result['suspicious'] == True]
         clean_data = result[result['suspicious'] == False]
 
-        risk = (len(suspicious)/len(result))*100
+        risk = (len(suspicious) / len(result)) * 100
 
-        # ALERT
+        # 🚨 ALERT SYSTEM
         if risk > 30:
             st.error("🚨 High Risk Dataset!")
         elif risk > 10:
-            st.warning("⚠️ Medium Risk")
+            st.warning("⚠️ Medium Risk Dataset")
         else:
             st.success("✅ Safe Dataset")
 
-        # METRICS
+        # 📊 METRICS
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Rows", len(result))
         col2.metric("Threats", len(suspicious))
-        col3.metric("Safe", len(clean_data))
+        col3.metric("Safe Rows", len(clean_data))
         col4.metric("Risk %", f"{risk:.2f}")
 
-        # TABS
-        tab1, tab2, tab3 = st.tabs(["🚨 Suspicious", "✅ Clean", "📊 Full"])
+        # 📑 TABS
+        tab1, tab2, tab3 = st.tabs(["🚨 Suspicious Data", "✅ Clean Data", "📊 Full Dataset"])
 
         with tab1:
             st.dataframe(suspicious)
@@ -86,21 +99,23 @@ def main_app():
         with tab3:
             st.dataframe(result)
 
+        # 📥 DOWNLOAD CLEAN DATA
         st.download_button(
             "📥 Download Clean Data",
             clean_data.to_csv(index=False),
-            "clean.csv"
+            "clean_dataset.csv"
         )
 
-    # HISTORY DISABLED
+    # 📁 HISTORY (DISABLED IN CLOUD)
     st.subheader("📁 Dataset History")
     st.info("History feature disabled in cloud version")
 
+    # 🚪 LOGOUT
     if st.button("Logout"):
         st.session_state.logged_in = False
 
 
-# ROUTER
+# ---------------- ROUTER ----------------
 if st.session_state.logged_in:
     main_app()
 else:
